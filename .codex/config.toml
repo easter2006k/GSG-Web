@@ -1,0 +1,12 @@
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+ANTHROPIC_BASE_URL = "http://localhost:20128/v1"
+ANTHROPIC_AUTH_TOKEN = "sk-d0e90c37a7fd0b6d-a17de8-549b9029"
+ANTHROPIC_MODEL = "agentrouter/claude-opus-5"
+ANTHROPIC_SMALL_FAST_MODEL = "agentrouter/claude-opus-5"
+ANTHROPIC_DEFAULT_OPUS_MODEL = "agentrouter/claude-opus-5"
+ANTHROPIC_DEFAULT_SONNET_MODEL = "agentrouter/claude-opus-5"
+ANTHROPIC_DEFAULT_HAIKU_MODEL = "agentrouter/claude-opus-5"
+CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1"

@@ -1,0 +1,601 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  PROGRAMME_COORDINATOR
+  SCHOLARSHIP_OFFICER
+  COUNSELLOR
+  CONTENT_MANAGER
+  VOLUNTEER_COORDINATOR
+  READ_ONLY
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+  ATTENDED
+  ABSENT
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ADDITIONAL_INFO_REQUIRED
+  APPROVED
+  REJECTED
+  CLOSED
+}
+
+enum CounsellingStatus {
+  NEW
+  UNDER_REVIEW
+  ASSIGNED
+  AWAITING_RESPONSE
+  APPOINTMENT_PROPOSED
+  SCHEDULED
+  COMPLETED
+  FOLLOWUP_REQUIRED
+  CANCELLED
+  CLOSED
+}
+
+enum AppointmentStatus {
+  PROPOSED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum VolunteerStatus {
+  NEW
+  REVIEWING
+  CONTACTED
+  ACCEPTED
+  DECLINED
+  INACTIVE
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  PROGRAMME_COORDINATOR
+  SCHOLARSHIP_OFFICER
+  COUNSELLOR
+  COLLEGE_MANAGER
+  VOLUNTEER_COORDINATOR
+  CONTENT_EDITOR
+  READ_ONLY
+}
+
+// Models
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String?   @unique
+  phone           String?   @unique
+  passwordHash    String?
+  displayName     String
+  role            UserRole  @default(READ_ONLY)
+  isActive        Boolean   @default(true)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  programmeRegistrations  ProgrammeRegistration[]
+  scholarships            ScholarshipApplication[]
+  counsellingRequests     CounsellingRequest[]
+  counsellingAssignments  CounsellingAssignment[]
+  counsellingAppointments CounsellingAppointment[]
+  counsellingNotes        CounsellingNote[]
+  volunteerApplications   VolunteerApplication[]
+  auditLogs               AuditLog[]
+  newsArticles            NewsArticle[]
+  testimonials            Testimonial[]
+  StudentProfile          StudentProfile[]
+}
+
+model District {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  stateCode String   @default("TN")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schools              School[]
+  colleges             College[]
+  programmes           Programme[]
+  scholarships         Scholarship[]
+  counsellingRequests  CounsellingRequest[]
+  StudentProfile       StudentProfile[]
+  VolunteerApplication VolunteerApplication[]
+}
+
+model School {
+  id                 String             @id @default(uuid()) @db.Uuid
+  name               String
+  districtId         String             @db.Uuid
+  district           District           @relation(fields: [districtId], references: [id])
+  schoolType         String?
+  address            String?
+  officialContact    String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  sourceUrl          String?
+  isActive           Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  programmeRegistrations ProgrammeRegistration[]
+  students               StudentProfile[]
+
+  @@index([districtId, name])
+}
+
+model StudentProfile {
+  id                   String    @id @default(uuid()) @db.Uuid
+  userId               String?   @db.Uuid
+  user                 User?     @relation(fields: [userId], references: [id])
+  fullName             String
+  dateOfBirth          DateTime?
+  schoolId             String?   @db.Uuid
+  school               School?   @relation(fields: [schoolId], references: [id])
+  currentQualification String?
+  districtId           String?   @db.Uuid
+  district             District? @relation(fields: [districtId], references: [id])
+  contactPhone         String
+  guardianContact      String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  scholarshipApplications ScholarshipApplication[]
+  counsellingRequests     CounsellingRequest[]
+}
+
+model Programme {
+  id                   String            @id @default(uuid()) @db.Uuid
+  title                String
+  slug                 String            @unique
+  description          String
+  venue                String?
+  districtId           String?           @db.Uuid
+  district             District?         @relation(fields: [districtId], references: [id])
+  startsAt             DateTime
+  endsAt               DateTime
+  registrationOpensAt  DateTime?
+  registrationClosesAt DateTime?
+  capacity             Int?
+  status               PublicationStatus @default(DRAFT)
+  isPublished          Boolean           @default(false)
+  imageUrl             String?
+  createdBy            String?           @db.Uuid
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  registrations ProgrammeRegistration[]
+
+  @@index([status, startsAt])
+  @@index([slug])
+}
+
+model ProgrammeRegistration {
+  id                    String             @id @default(uuid()) @db.Uuid
+  programmeId           String             @db.Uuid
+  programme             Programme          @relation(fields: [programmeId], references: [id])
+  studentName           String
+  schoolId              String?            @db.Uuid
+  school                School?            @relation(fields: [schoolId], references: [id])
+  schoolNameSnapshot    String
+  standardAndGroup      String
+  contactPhone          String
+  referralSource        String
+  referralOther         String?
+  registrationReference String             @unique
+  status                RegistrationStatus @default(REGISTERED)
+  attendanceStatus      String?
+  submittedAt           DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  User                  User?              @relation(fields: [userId], references: [id])
+  userId                String?            @db.Uuid
+
+  @@index([programmeId, status])
+  @@index([submittedAt])
+  @@index([contactPhone])
+}
+
+model College {
+  id                     String             @id @default(uuid()) @db.Uuid
+  name                   String
+  slug                   String             @unique
+  districtId             String?            @db.Uuid
+  district               District?          @relation(fields: [districtId], references: [id])
+  address                String?
+  institutionType        String?
+  officialWebsite        String?
+  contactInformation     String?
+  affiliationInformation String?
+  verificationStatus     VerificationStatus @default(UNVERIFIED)
+  verifiedAt             DateTime?
+  sourceUrl              String?
+  isPublished            Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  collegeCourses CollegeCourse[]
+
+  @@index([districtId, name])
+  @@index([slug])
+}
+
+model Course {
+  id                    String   @id @default(uuid()) @db.Uuid
+  name                  String
+  slug                  String   @unique
+  category              String
+  qualificationRequired String?
+  durationMonths        Int?
+  description           String?
+  isPublished           Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  collegeCourses CollegeCourse[]
+
+  @@index([category, name])
+  @@index([slug])
+}
+
+model CollegeCourse {
+  id                 String             @id @default(uuid()) @db.Uuid
+  collegeId          String             @db.Uuid
+  college            College            @relation(fields: [collegeId], references: [id])
+  courseId           String             @db.Uuid
+  course             Course             @relation(fields: [courseId], references: [id])
+  academicYear       String
+  eligibilityNotes   String?
+  admissionUrl       String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  feeRecords FeeRecord[]
+
+  @@unique([collegeId, courseId, academicYear])
+  @@index([collegeId, academicYear])
+}
+
+model FeeRecord {
+  id                 String             @id @default(uuid()) @db.Uuid
+  collegeCourseId    String             @db.Uuid
+  collegeCourse      CollegeCourse      @relation(fields: [collegeCourseId], references: [id])
+  academicYear       String
+  quotaOrCategory    String?
+  tuitionFee         Decimal?           @db.Decimal(12, 2)
+  otherFees          Decimal?           @db.Decimal(12, 2)
+  hostelFee          Decimal?           @db.Decimal(12, 2)
+  transportFee       Decimal?           @db.Decimal(12, 2)
+  currency           String             @default("INR")
+  sourceUrl          String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([collegeCourseId, academicYear])
+}
+
+model Scholarship {
+  id                  String             @id @default(uuid()) @db.Uuid
+  title               String
+  slug                String             @unique
+  providerName        String
+  description         String
+  academicYear        String?
+  eligibilityCriteria String
+  incomeCriteria      String?
+  academicCriteria    String?
+  benefitAmount       Decimal?           @db.Decimal(12, 2)
+  currency            String             @default("INR")
+  opensAt             DateTime?
+  deadlineAt          DateTime?
+  officialUrl         String?
+  requiredDocuments   String[]
+  status              PublicationStatus  @default(DRAFT)
+  isPublished         Boolean            @default(false)
+  verificationStatus  VerificationStatus @default(UNVERIFIED)
+  verifiedAt          DateTime?
+  districtId          String?            @db.Uuid
+  district            District?          @relation(fields: [districtId], references: [id])
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  applications ScholarshipApplication[]
+
+  @@index([status, deadlineAt])
+  @@index([slug])
+}
+
+model ScholarshipApplication {
+  id                    String                @id @default(uuid()) @db.Uuid
+  scholarshipId         String                @db.Uuid
+  scholarship           Scholarship           @relation(fields: [scholarshipId], references: [id])
+  studentProfileId      String?               @db.Uuid
+  studentProfile        StudentProfile?       @relation(fields: [studentProfileId], references: [id])
+  userId                String?               @db.Uuid
+  user                  User?                 @relation(fields: [userId], references: [id])
+  applicationReference  String                @unique
+  applicantName         String
+  contactPhone          String
+  email                 String?
+  educationDetails      Json?
+  eligibilityData       Json?
+  documents             ApplicationDocument[]
+  declarationAcceptedAt DateTime?
+  status                ApplicationStatus     @default(DRAFT)
+  assignedReviewerId    String?               @db.Uuid
+  submittedAt           DateTime?
+  decidedAt             DateTime?
+  reviewerComment       String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  statusHistory ApplicationStatusHistory[]
+
+  @@index([scholarshipId, status])
+  @@index([applicationReference])
+  @@index([contactPhone])
+}
+
+model ApplicationDocument {
+  id                       String                 @id @default(uuid()) @db.Uuid
+  scholarshipApplicationId String                 @db.Uuid
+  scholarshipApplication   ScholarshipApplication @relation(fields: [scholarshipApplicationId], references: [id])
+  documentType             String
+  storageKey               String
+  originalFilename         String
+  mimeType                 String?
+  fileSize                 Int?
+  scanStatus               String?
+  uploadedAt               DateTime               @default(now())
+}
+
+model ApplicationStatusHistory {
+  id                       String                 @id @default(uuid()) @db.Uuid
+  scholarshipApplicationId String                 @db.Uuid
+  scholarshipApplication   ScholarshipApplication @relation(fields: [scholarshipApplicationId], references: [id])
+  previousStatus           ApplicationStatus?
+  newStatus                ApplicationStatus
+  changedBy                String?                @db.Uuid
+  reason                   String?
+  createdAt                DateTime               @default(now())
+}
+
+model CounsellingRequest {
+  id                     String            @id @default(uuid()) @db.Uuid
+  requestReference       String            @unique
+  userId                 String?           @db.Uuid
+  user                   User?             @relation(fields: [userId], references: [id])
+  studentProfileId       String?           @db.Uuid
+  studentProfile         StudentProfile?   @relation(fields: [studentProfileId], references: [id])
+  studentName            String
+  contactPhone           String
+  schoolOrCollege        String?
+  qualification          String?
+  districtId             String?           @db.Uuid
+  district               District?         @relation(fields: [districtId], references: [id])
+  topic                  String
+  description            String
+  preferredContactMethod String?
+  preferredFormat        String?
+  status                 CounsellingStatus @default(NEW)
+  priority               String            @default("NORMAL")
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  assignments  CounsellingAssignment[]
+  appointments CounsellingAppointment[]
+  notes        CounsellingNote[]
+}
+
+model CounsellingAssignment {
+  id                   String             @id @default(uuid()) @db.Uuid
+  counsellingRequestId String             @db.Uuid
+  counsellingRequest   CounsellingRequest @relation(fields: [counsellingRequestId], references: [id])
+  counsellorUserId     String             @db.Uuid
+  counsellor           User               @relation(fields: [counsellorUserId], references: [id])
+  assignedBy           String?            @db.Uuid
+  assignedAt           DateTime           @default(now())
+  endedAt              DateTime?
+
+  @@index([counsellorUserId])
+}
+
+model CounsellingAppointment {
+  id                       String             @id @default(uuid()) @db.Uuid
+  counsellingRequestId     String             @db.Uuid
+  counsellingRequest       CounsellingRequest @relation(fields: [counsellingRequestId], references: [id])
+  counsellorUserId         String             @db.Uuid
+  counsellor               User               @relation(fields: [counsellorUserId], references: [id])
+  startsAt                 DateTime
+  endsAt                   DateTime
+  format                   String?
+  locationOrMeetingDetails String?
+  status                   AppointmentStatus  @default(PROPOSED)
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  @@index([counsellorUserId, startsAt])
+  @@index([startsAt])
+}
+
+model CounsellingNote {
+  id                   String             @id @default(uuid()) @db.Uuid
+  counsellingRequestId String             @db.Uuid
+  counsellingRequest   CounsellingRequest @relation(fields: [counsellingRequestId], references: [id])
+  authorUserId         String             @db.Uuid
+  author               User               @relation(fields: [authorUserId], references: [id])
+  note                 String
+  visibility           String             @default("INTERNAL")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([counsellingRequestId])
+}
+
+model VolunteerApplication {
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String?         @db.Uuid
+  user         User?           @relation(fields: [userId], references: [id])
+  fullName     String
+  email        String
+  phone        String
+  dateOfBirth  DateTime?
+  city         String?
+  districtId   String?         @db.Uuid
+  district     District?       @relation(fields: [districtId], references: [id])
+  skills       String[]
+  interests    String[]
+  availability String?
+  experience   String?
+  message      String?
+  status       VolunteerStatus @default(NEW)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model NewsArticle {
+  id          String            @id @default(uuid()) @db.Uuid
+  title       String
+  slug        String            @unique
+  summary     String?
+  content     String
+  authorId    String?           @db.Uuid
+  author      User?             @relation(fields: [authorId], references: [id])
+  imageUrl    String?
+  status      PublicationStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([slug])
+  @@index([publishedAt])
+}
+
+model Testimonial {
+  id           String   @id @default(uuid()) @db.Uuid
+  studentName  String
+  slug         String   @unique
+  content      String
+  imageUrl     String?
+  course       String?
+  college      String?
+  year         String?
+  isPublished  Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  User         User?    @relation(fields: [userId], references: [id])
+  userId       String?  @db.Uuid
+
+  @@index([slug])
+}
+
+model Faq {
+  id           String   @id @default(uuid()) @db.Uuid
+  question     String
+  answer       String
+  category     String?
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ContactEnquiry {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String?
+  phone     String
+  subject   String?
+  message   String
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ImpactMetric {
+  id              String   @id @default(uuid()) @db.Uuid
+  label           String
+  value           Int
+  reportingPeriod String?
+  source          String?
+  isVerified      Boolean  @default(false)
+  isPublished     Boolean  @default(false)
+  displayOrder    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String?  @db.Uuid
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model SiteContent {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     Json
+  type      String   @default("text")
+  updatedAt DateTime @updatedAt
+}
+
+model GalleryItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  title        String?
+  description  String?
+  imageUrl     String
+  category     String?
+  schoolId     String?  @db.Uuid
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

@@ -1,0 +1,413 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 216 85% 40%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 220 50% 24%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 42 96% 53%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 216 85% 40%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 210 40% 98%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .solid-panel {
+    @apply bg-white border border-slate-200 shadow-md;
+  }
+
+  .hero-gradient {
+    background: linear-gradient(135deg, #102A56 0%, #1246A8 50%, #1a5bb8 100%);
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary/90 px-6 py-3 rounded-lg font-medium transition-all duration-200;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary text-primary hover:bg-primary hover:text-white px-6 py-3 rounded-lg font-medium transition-all duration-200;
+  }
+
+  .section-heading {
+    @apply text-4xl font-bold text-secondary mb-4;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1246A8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #102A56;
+}
+
+/* Animation utilities */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Continuous Right-to-Left Infinite Marquee */
+@keyframes marquee-rtl {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-rtl {
+  display: flex;
+  width: max-content;
+  animation: marquee-rtl 36s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-rtl:hover,
+.animate-marquee-rtl.is-paused {
+  animation-play-state: paused;
+}
+
+/* ==========================================================================
+   Multicolor Circular Ring Loading Animation (Organic Overlapping Rings)
+   ========================================================================== */
+
+/* Full-screen loading overlay */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #03030f;
+  overflow: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Center content */
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+/* Ring container */
+.loader-rings {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+/* Shared ring styles - strictly scoped inside .loader-rings */
+.loader-rings .ring,
+.loader-rings .loader-ring {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: 5px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  will-change: transform;
+}
+
+/* Individual overlapping colored rings - strictly scoped to prevent collision with Tailwind ring utilities */
+.loader-rings .ring-1,
+.loader-rings .loader-ring-1 {
+  border-color: #ffffff;
+  transform: rotate(0deg) scaleX(0.91);
+  animation: ring-one 5s linear infinite;
+}
+
+.loader-rings .ring-2,
+.loader-rings .loader-ring-2 {
+  border-color: #ef5a50;
+  transform: rotate(25deg) scaleX(0.87) scaleY(0.96);
+  animation: ring-two 6s linear infinite;
+}
+
+.loader-rings .ring-3,
+.loader-rings .loader-ring-3 {
+  border-color: #423cff;
+  transform: rotate(-35deg) scaleX(0.94) scaleY(0.91);
+  animation: ring-three 7s linear infinite;
+}
+
+.loader-rings .ring-4,
+.loader-rings .loader-ring-4 {
+  border-color: #38bd80;
+  transform: rotate(55deg) scaleX(0.89) scaleY(0.95);
+  animation: ring-four 5.5s linear infinite;
+}
+
+.loader-rings .ring-5,
+.loader-rings .loader-ring-5 {
+  border-color: #9b46d4;
+  transform: rotate(-60deg) scaleX(0.96) scaleY(0.88);
+  animation: ring-five 6.5s linear infinite;
+}
+
+.loader-rings .ring-6,
+.loader-rings .loader-ring-6 {
+  border-color: #e7c44a;
+  border-width: 4px;
+  transform: rotate(80deg) scaleX(0.92) scaleY(0.97);
+  animation: ring-six 7.5s linear infinite;
+}
+
+/* Smooth rotation in alternating directions */
+@keyframes ring-one {
+  from { transform: rotate(0deg) scaleX(0.91); }
+  to   { transform: rotate(360deg) scaleX(0.91); }
+}
+
+@keyframes ring-two {
+  from { transform: rotate(25deg) scaleX(0.87) scaleY(0.96); }
+  to   { transform: rotate(-335deg) scaleX(0.87) scaleY(0.96); }
+}
+
+@keyframes ring-three {
+  from { transform: rotate(-35deg) scaleX(0.94) scaleY(0.91); }
+  to   { transform: rotate(325deg) scaleX(0.94) scaleY(0.91); }
+}
+
+@keyframes ring-four {
+  from { transform: rotate(55deg) scaleX(0.89) scaleY(0.95); }
+  to   { transform: rotate(415deg) scaleX(0.89) scaleY(0.95); }
+}
+
+@keyframes ring-five {
+  from { transform: rotate(-60deg) scaleX(0.96) scaleY(0.88); }
+  to   { transform: rotate(-420deg) scaleX(0.96) scaleY(0.88); }
+}
+
+@keyframes ring-six {
+  from { transform: rotate(80deg) scaleX(0.92) scaleY(0.97); }
+  to   { transform: rotate(-280deg) scaleX(0.92) scaleY(0.97); }
+}
+
+/* Loading label */
+.loader-text {
+  margin: 55px 0 0;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+/* Optional contextual subtext */
+.loader-subtext {
+  margin: 12px 0 0;
+  color: #94a3b8;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  max-width: 460px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Embedded card container variant */
+.loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: #03030f;
+  border-radius: 1.25rem;
+  padding: 3rem 1.5rem;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+}
+
+/* Inline minimal variant */
+.loader-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: #03030f;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.loader-inline .loader-rings {
+  width: 40px;
+  height: 40px;
+}
+
+.loader-inline .ring {
+  border-width: 2.5px;
+}
+
+.loader-inline .loader-text {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Sizing variations */
+.loader-rings.size-sm {
+  width: 90px;
+  height: 90px;
+}
+.loader-rings.size-sm .ring {
+  border-width: 3px;
+}
+.loader-card .loader-rings.size-sm + .loader-text,
+.loader-overlay .loader-rings.size-sm + .loader-text {
+  margin-top: 24px;
+  font-size: 20px;
+}
+
+.loader-rings.size-md {
+  width: 160px;
+  height: 160px;
+}
+.loader-rings.size-md .ring {
+  border-width: 4px;
+}
+.loader-card .loader-rings.size-md + .loader-text,
+.loader-overlay .loader-rings.size-md + .loader-text {
+  margin-top: 36px;
+  font-size: 26px;
+}
+
+.loader-rings.size-lg {
+  width: 220px;
+  height: 220px;
+}
+
+/* Responsive layout */
+@media (max-width: 600px) {
+  .loader-rings {
+    width: 175px;
+    height: 175px;
+  }
+
+  .loader-rings .ring,
+  .loader-rings .loader-ring {
+    border-width: 4px;
+  }
+
+  .loader-text {
+    margin-top: 38px;
+    font-size: 27px;
+  }
+}
+
+/* Accessibility: Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .loader-rings .ring,
+  .loader-rings .loader-ring {
+    animation: none !important;
+  }
+}
+
+/* Backward-compatibility aliases for legacy classes */
+.heartbeat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #03030f;
+  overflow: hidden;
+}
+
+.heartbeat-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.heartbeat-card {
+  width: 100%;
+  background: #03030f;
+  border-radius: 1.25rem;
+  padding: 3rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
